@@ -8,7 +8,6 @@ from logger import init_logs, get_logger
 from dataset import SA1BDataset, MitoDataset, COCOSegmentation, ADE20KDataset
 #from coco_dataset import COCOSegmentation
 import timeit
-from SA1B_NAS_Trainer import SA1B_NAS_Trainer
 from COCO_NAS_Trainer import COCO_NAS_Trainer
 from Mito_NAS_Trainer import Mito_NAS_Trainer
 
@@ -57,8 +56,8 @@ if __name__ == '__main__':
         "residual_hidden": [1020],
     }
     elastic_config = {
-        "atten_out_space": [768], #Don't go over 768
-        "inter_hidden_space": [768,1020,1536,2304], #Reduce for minimizing model size [1536,2304]
+        "atten_out_space": [768], #Can't go over 768 [768,512]
+        "inter_hidden_space": [768,1020,1536,2304], #Reduce for minimizing model size [256,768,1020,1536,2304]
         "residual_hidden": [1020],
     }
 
@@ -66,17 +65,17 @@ if __name__ == '__main__':
                 '5':elastic_config,'6':elastic_config,'7':elastic_config,'8':elastic_config,'9':elastic_config,
                 '10':elastic_config,'11':elastic_config,
                 "layer_elastic":{
-                #"elastic_layer_idx": [1,6,9],
-                #"remove_layer_prob":[.5,.5,.5]
-                "elastic_layer_idx":  [1,2,5,6,9],
-                "remove_layer_prob":[.5,.5,.5,.5,.5]
+                    # "elastic_layer_idx":  [],
+                    # "remove_layer_prob":[]
+                    #"elastic_layer_idx": [1,6,9],
+                    #"remove_layer_prob":[.5,.5,.5]
+                    "elastic_layer_idx":  [1,2,5,6,9],
+                    "remove_layer_prob":[.5,.5,.5,.5,.5]
                 }}
 
 
-    ofm = OFM(original_model, elastic_config=config)
 
-    # saved_supermodel = SamModel.from_pretrained("logs/2024-05-25--01:28:19.953478_dataset[sa1b]_trainable[em]_epochs[100]_lr[1e-05]_local_bs[32]")
-    # ofm = OFM(saved_supermodel)
+    ofm = OFM(original_model, elastic_config=config)
 
     args.supermodel = ofm
     args.pretrained = original_model

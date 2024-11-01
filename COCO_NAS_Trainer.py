@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from pycocotools import mask as mask_utils
 from tqdm import tqdm
-from utility import compute_iou, compute_batch_iou, get_trainable_parameters, get_optimizer_and_scheduler, compute_flattened_iou
+from utility import compute_iou, compute_batch_iou, get_trainable_parameters, get_optimizer_and_scheduler, compute_flattened_iou, toggle_mask_decoder
 import timeit
 import copy
 from monai.losses import DiceLoss, DiceFocalLoss, DiceCELoss
@@ -142,6 +142,7 @@ class COCO_NAS_Trainer:
 
         # backward pass (compute gradients of parameters w.r.t. loss)
         loss.backward()
+        toggle_mask_decoder(model,freeze=True)
         # loss.sum().backward()
         self.optimizer.step()
         self.scheduler.step()

@@ -170,7 +170,7 @@ def show_box(box, ax, label="",linecolor=[]):
         ax.text(label_x, label_y, label, fontsize=20, color='red',
                 ha='center', va='center')
 
-def save_preds(map,folder):
+def save_preds(map,folder,show_prompt='p'):
     if os.path.exists(folder):
         shutil.rmtree(folder)
     os.makedirs(folder)
@@ -202,20 +202,30 @@ def save_preds(map,folder):
 
         axes[0].imshow(img)
         show_mask(gts, axes[0]) #plt.gca()
-        show_points(point_prompt, np.array([1]), axes[0])
-        show_box(box_prompt, axes[0])
-        axes[0].set_title(f'Ground truth',fontsize=18)
+        if 'p' in show_prompt:
+            show_points(point_prompt, np.array([1]), axes[0])
+        if 'b' in show_prompt:
+            show_box(box_prompt, axes[0])
+        axes[0].set_title('Ground truth', fontsize=32, fontweight='bold')
+        axes[0].axis('off')
 
         axes[1].imshow(img)
         show_mask(pred, axes[1])
-        show_points(point_prompt, np.array([1]), axes[1])
-        show_box(box_prompt, axes[1])
-        axes[1].set_title(f'Prediction iou={iou}',fontsize=18)
-        
+        if 'p' in show_prompt:
+            show_points(point_prompt, np.array([1]), axes[1])
+        if 'b' in show_prompt:
+            show_box(box_prompt, axes[1])
+        axes[1].set_title(f'Prediction iou={round(iou.item(),2)}',fontsize=32, fontweight='bold')
+        axes[1].axis('off')
+  
         plt.axis('off')
+        plt.tight_layout()
+        plt.tight_layout(pad=2)  # General padding between subplots
+        plt.subplots_adjust(left=0.05, right=0.95, top=0.9, bottom=0.05)  # Increase 'top' for more space for the title
         plot_path = os.path.join(folder, f'{name}.png')
         #plt.tight_layout()
         plt.savefig(plot_path)
+        plt.close()
 
 def structured_pruning(model,layers_to_prune,global_attn_indexes):
     """Prune the SAM model's vision encoder layers.
@@ -545,6 +555,13 @@ def get_optimizer_and_scheduler(params,lr=1e-5,weight_decay=0,scheduler=None):
     else:
         scheduler.optimizer = optimizer
     return optimizer, scheduler
+
+def toggle_mask_decoder(model,freeze=True):
+    
+    for name, param in model.named_parameters():
+        if name.startswith("mask_decoder") and freeze:
+            param.requires_grad_(not freeze)
+
 
 def get_trainable_parameters(model,trainable):
     # Freeze modules that are not set as trainable
